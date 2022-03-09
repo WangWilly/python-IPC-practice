@@ -1,23 +1,22 @@
-import os
+import socket
 import numpy as np
 
 
-read_path = "/tmp/server_out.pipe"
+# Configuration of the socket
+HOST = '127.0.0.1'
+PORT = 2502
+
 
 if __name__ == "__main__":
-    try:
-        os.mkfifo(read_path)
-    except OSError as oe:
-        print (f"mkfifo error: {oe}")
-
     while True:
-        # print("Opening FIFO...")
-        with open(read_path) as rfifo:
-            # print("FIFO opened")
-            while True:
-                data = rfifo.read()
-                if len(data) == 0:
-                    break
-
-                nums = np.array([int(n) for n in data.split()])
-                print(nums.mean())
+        socket_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        socket_client.connect((HOST, PORT))
+        try:
+            # print("wait")
+            socket_client.sendall(b"ready")
+            data = str(socket_client.recv(1024), encoding='utf-8')
+            if data == "shut": break
+            nums = np.array([int(n) for n in data.split()])
+            print(nums.mean())
+        finally:
+            socket_client.close()
